@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="https://raw.githubusercontent.com/failed555-tech/dgs-4/refs/heads/main/DGSicon.ico">
+<title>DGS 5 V2.6.8</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tomorrow:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Tomorrow', cursive;
+    color: #ffffff;
+    text-align: center;
+    padding: 60px 20px;
+    background: linear-gradient(180deg, #1e5799, #7db9e8);
+    background-attachment: fixed;
+}
+
+.event {
+    background: rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 35px;
+    margin: 25px auto;
+    max-width: 720px;
+    border: 1px solid rgba(255,255,255,0.35);
+    backdrop-filter: blur(18px);
+}
+
+button {
+    font-family: 'Tomorrow', cursive;
+    background: linear-gradient(to bottom, #fefefe, #d7e7f7);
+    border: 1px solid #6aa2d8;
+    border-radius: 6px;
+    padding: 10px 18px;
+    margin: 6px;
+    min-width: 140px;
+    color: #1a1a1a;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+hr {
+    border: none;
+    height: 1px;
+    background: rgba(255,255,255,0.3);
+}
+</style>
+</head>
+
+<body>
+
+<div class="event">
+    <h1>Welcome to DGS</h1>
+    <h2>The Ultimate Game Website</h2>
+    <h4>DGS 5 V2.6.8</h4>
+</div>
+
+<div class="event">
+    <h2>Game Collections</h2>
+    <hr>
+    <div id="collections">Loading games...</div>
+</div>
+
+<script>
+const repoOwner = "failed555-tech";
+const repoName = "dgs5";
+const branch = "main";
+
+const collectionsDiv = document.getElementById("collections");
+
+function formatName(name) {
+    return name
+        .replace(".html", "")
+        .replace(/[-_]/g, " ")
+        .replace(/\b\w/g, l => l.toUpperCase());
+}
+
+function createCollection(folderName, files) {
+    const div = document.createElement("div");
+
+    div.innerHTML = `
+        <h3>${formatName(folderName)} Collection</h3>
+        <hr>
+    `;
+
+    files.forEach(file => {
+        const btn = document.createElement("button");
+        btn.textContent = formatName(file.name);
+
+        // ✅ FIXED navigation (THIS is what stops the 404)
+        btn.onclick = () => {
+            const safePath = file.path
+                .split("/")
+                .map(part => encodeURIComponent(part))
+                .join("/");
+
+            const url = `https://${repoOwner}.github.io/${repoName}/${safePath}`;
+            
+            console.log("Opening:", url); // debug
+            window.location.href = url;
+        };
+
+        div.appendChild(btn);
+    });
+
+    return div;
+}
+
+async function loadFolder(folderPath) {
+    const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${folderPath}?ref=${branch}`;
+
+    const res = await fetch(url);
+    if (!res.ok) return [];
+
+    const data = await res.json();
+
+    return data.filter(f => f.type === "file" && f.name.endsWith(".html"));
+}
+
+async function init() {
+    try {
+        const apiURL = `https://api.github.com/repos/${repoOwner}/${repoName}/contents?ref=${branch}`;
+        const res = await fetch(apiURL);
+        const items = await res.json();
+
+        const folders = items.filter(i => i.type === "dir");
+
+        collectionsDiv.innerHTML = "";
+
+        for (let folder of folders) {
+            const files = await loadFolder(folder.path);
+
+            if (!files.length) continue;
+
+            const section = createCollection(folder.name, files);
+            collectionsDiv.appendChild(section);
+        }
+
+    } catch (e) {
+        console.error(e);
+        collectionsDiv.innerHTML = "Failed to load data";
+    }
+}
+
+init();
+</script>
+
+</body>
+</html>
