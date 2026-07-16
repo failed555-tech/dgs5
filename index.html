@@ -92,7 +92,7 @@ function createCollection(folderName, files) {
         const btn = document.createElement("button");
         btn.textContent = formatName(file.name);
 
-        // ✅ FIXED navigation (THIS is what stops the 404)
+        // FIXED nav (THIS is what stops the 404)
         btn.onclick = () => {
             const safePath = file.path
                 .split("/")
